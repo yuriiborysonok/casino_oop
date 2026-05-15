@@ -27,39 +27,39 @@ jobs:
         # If the tests fail, the docker build command will fail and halt the CI pipeline.
         run: docker build -t casino-platform-local .
 
-  deploy-to-cloud-run:
-    name: Deploy to Google Cloud Run
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main' # Only deploy when code is pushed/merged to main
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Google Cloud Auth
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-
-      - name: Configure Docker for GCP
-        run: gcloud auth configure-docker
-
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
-          docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Deploy to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v1
-        with:
-          service: ${{ env.SERVICE_NAME }}
-          image: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          region: ${{ env.REGION }}
-          env_vars: |
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-          flags: |
-            --allow-unauthenticated
+  # deploy-to-cloud-run:
+  #   name: Deploy to Google Cloud Run
+  #   runs-on: ubuntu-latest
+  #   needs: build-and-test
+  #   if: github.ref == 'refs/heads/main' # Only deploy when code is pushed/merged to main
+  #
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v3
+  #
+  #     - name: Google Cloud Auth
+  #       uses: google-github-actions/auth@v1
+  #       with:
+  #         credentials_json: ${{ secrets.GCP_SA_KEY }}
+  #
+  #     - name: Set up Cloud SDK
+  #       uses: google-github-actions/setup-gcloud@v1
+  #
+  #     - name: Configure Docker for GCP
+  #       run: gcloud auth configure-docker
+  #
+  #     - name: Build and Push Docker Image
+  #       run: |
+  #         docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+  #         docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+  #
+  #     - name: Deploy to Cloud Run
+  #       uses: google-github-actions/deploy-cloudrun@v1
+  #       with:
+  #         service: ${{ env.SERVICE_NAME }}
+  #         image: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+  #         region: ${{ env.REGION }}
+  #         env_vars: |
+  #           DATABASE_URL=${{ secrets.DATABASE_URL }}
+  #         flags: |
+  #           --allow-unauthenticated

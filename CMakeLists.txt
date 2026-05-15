@@ -35,8 +35,10 @@ target_include_directories(casino_core PUBLIC include)
 add_executable(casino_server src/main.cpp)
 
 # Підключаємо libpqxx та libpq напряму через шляхи Homebrew (macOS ARM64)
-target_include_directories(casino_server PRIVATE /opt/homebrew/include /opt/homebrew/opt/libpq/include)
-target_link_directories(casino_server PRIVATE /opt/homebrew/lib /opt/homebrew/opt/libpq/lib)
+if(APPLE)
+    target_include_directories(casino_server PRIVATE /opt/homebrew/include /opt/homebrew/opt/libpq/include)
+    target_link_directories(casino_server PRIVATE /opt/homebrew/lib /opt/homebrew/opt/libpq/lib)
+endif()
 target_link_libraries(casino_server PRIVATE casino_core httplib::httplib nlohmann_json::nlohmann_json pqxx pq)
 
 add_subdirectory(tests)
