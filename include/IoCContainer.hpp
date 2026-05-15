@@ -5,8 +5,7 @@
 #include "SpdLogger.hpp"
 #include <memory>
 
-// IoC Контейнер (Inversion of Control Container)
-// Відповідає за створення об'єктів та ін'єкцію їх залежностей (Wiring)
+// IoC Контейнер
 class IoCContainer {
 private:
   std::shared_ptr<ILogger> logger;
@@ -14,15 +13,16 @@ private:
 
 public:
   IoCContainer() {
-    // Контейнер автоматично "збирає" систему:
-    // 1. Створює логер
+    // контейнер автоматом збирає систему і створює логер
     logger = std::make_shared<SpdLogger>();
 
-    // Зчитуємо URL бази з змінної середовища (для Docker/Cloud Run), інакше локальний дефолт
-    const char* env_db_url = std::getenv("DATABASE_URL");
-    std::string dbStr = env_db_url ? std::string(env_db_url) : "dbname=casino_db user=postgres password=secret host=localhost port=5432";
+    // зчитуємо урл бази з змінної середовища, інакше локальний дефолт
+    const char *env_db_url = std::getenv("DATABASE_URL");
+    std::string dbStr = env_db_url ? std::string(env_db_url)
+                                   : "dbname=casino_db user=postgres "
+                                     "password=secret host=localhost port=5432";
 
-    // 2. Вставляє (Inject) логер у базу даних під час її створення
+    // інжект логера у базу даних під час її створення
     database = std::make_shared<PostgresDatabase>(logger, dbStr);
   }
 

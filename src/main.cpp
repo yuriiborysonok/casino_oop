@@ -5,7 +5,6 @@
 #include "httplib.h"
 #include <cstdlib>
 #include <ctime>
-#include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
 
