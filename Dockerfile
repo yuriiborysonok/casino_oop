@@ -46,14 +46,12 @@ RUN apt-get update && apt-get install -y libpqxx-dev || true
 
 WORKDIR /app
 
-# Copy the compiled executable from the builder stage
-COPY --from=builder /app/build/casino_server .
+# Copy the compiled executables from the builder stage
+COPY --from=builder /app/build/wallet_service .
+COPY --from=builder /app/build/game_service .
 
-# Copy the frontend files so the server can serve them
+# Copy the frontend files (if needed, though Nginx handles it now)
 COPY frontend/ frontend/
 
-# Expose port 8080 for Cloud Run
-EXPOSE 8080
-
-# Command to run the application
-CMD ["./casino_server"]
+# Default command (will be overridden by docker-compose)
+CMD ["bash"]

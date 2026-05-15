@@ -17,16 +17,37 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
+  wallet-service:
     build: .
+    command: ["./wallet_service"]
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
-      # Ensure the backend points to the docker DB instance
       - DATABASE_URL=postgresql://casino_user:casino_password@db:5432/casino_db
     depends_on:
       db:
         condition: service_healthy
+
+  game-service:
+    build: .
+    command: ["./game_service"]
+    ports:
+      - "8082:8082"
+    environment:
+      - WALLET_HOST=wallet-service
+    depends_on:
+      - wallet-service
+
+  api-gateway:
+    image: nginx:alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - wallet-service
+      - game-service
 
 volumes:
   pgdata:
