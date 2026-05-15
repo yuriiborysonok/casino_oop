@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/casino_tests.dir/PatternTests.cpp.o CMakeFiles/casino_tests.dir/WalletTests.cpp.o CMakeFiles/casino_tests.dir/main.cpp.o -o casino_tests  ../lib/libgtest_main.a ../libcasino_core.a ../lib/libgtest.a

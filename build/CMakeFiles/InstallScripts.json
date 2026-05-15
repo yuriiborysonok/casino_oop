@@ -1,0 +1,13 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/bars/OOP NEW/CasinoPlatform/build/cmake_install.cmake",
+		"/Users/bars/OOP NEW/CasinoPlatform/build/_deps/googletest-build/cmake_install.cmake",
+		"/Users/bars/OOP NEW/CasinoPlatform/build/_deps/googletest-build/googlemock/cmake_install.cmake",
+		"/Users/bars/OOP NEW/CasinoPlatform/build/_deps/googletest-build/googletest/cmake_install.cmake",
+		"/Users/bars/OOP NEW/CasinoPlatform/build/_deps/httplib-build/cmake_install.cmake",
+		"/Users/bars/OOP NEW/CasinoPlatform/build/_deps/nlohmann_json-build/cmake_install.cmake",
+		"/Users/bars/OOP NEW/CasinoPlatform/build/tests/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

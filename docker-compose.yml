@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: casino_user
+      POSTGRES_PASSWORD: casino_password
+      POSTGRES_DB: casino_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U casino_user -d casino_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      # Ensure the backend points to the docker DB instance
+      - DATABASE_URL=postgresql://casino_user:casino_password@db:5432/casino_db
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

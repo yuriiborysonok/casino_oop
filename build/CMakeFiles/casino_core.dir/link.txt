@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcasino_core.a CMakeFiles/casino_core.dir/src/Wallet.cpp.o
+/usr/bin/ranlib libcasino_core.a
