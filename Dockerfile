@@ -29,7 +29,7 @@ COPY src/ src/
 COPY tests/ tests/
 
 # Build the project and run tests
-RUN mkdir build && cd build && cmake .. && make && ./casino_tests
+RUN mkdir build && cd build && cmake .. && make && ./tests/casino_tests
 
 # STAGE 2: Runtime Environment
 FROM ubuntu:22.04
