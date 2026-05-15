@@ -20,5 +20,5 @@ frontend/dist/
 .idea/
 .env
 .cache/
-
+.clangd
 *.md
