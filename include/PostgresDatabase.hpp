@@ -22,7 +22,7 @@ public:
 
         pqxx::work W(conn);
 
-        // 1. Створюємо таблицю гравців (Users)
+        // 1. Створюємо таблицю гравців
         W.exec("CREATE TABLE IF NOT EXISTS users ("
                "user_id SERIAL PRIMARY KEY, "
                "username VARCHAR(50) UNIQUE NOT NULL, "
@@ -31,7 +31,7 @@ public:
                "balance_sweep NUMERIC(15, 2) NOT NULL DEFAULT 2.0"
                ");");
 
-        // 2. Створюємо таблицю транзакцій (Transactions)
+        // 2. Створюємо таблицю транзакцій
         W.exec("CREATE TABLE IF NOT EXISTS transactions ("
                "transaction_id SERIAL PRIMARY KEY, "
                "user_id INT REFERENCES users(user_id), "
@@ -41,7 +41,7 @@ public:
                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
                ");");
 
-        // Safe Migration: Add new columns if they don't exist
+        // безпечна міграція
         try {
           W.exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS balance_gold "
                  "NUMERIC(15, 2) DEFAULT 75000.0;");
@@ -50,7 +50,6 @@ public:
           W.exec("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS currency "
                  "VARCHAR(10) DEFAULT 'gold';");
         } catch (...) {
-          // Ignore if already exists
         }
 
         W.commit();
@@ -105,13 +104,9 @@ public:
     try {
       pqxx::connection conn(connectionString);
       pqxx::work W(conn);
-
-      // В реальному житті тут має бути хешування (bcrypt).
-      // Для цілей ООП лабораторної зберігаємо як є (або імітуємо хеш)
-
       pqxx::result res = W.exec_params(
           "INSERT INTO users (username, password_hash, balance_gold, "
-          "balance_sweep) VALUES ($1, $2, 75000.0, 2.0) RETURNING user_id",
+          "balance_sweep) VALUES ($1, $2, 0.0, 0.0) RETURNING user_id",
           username, password);
       W.commit();
 
@@ -119,14 +114,13 @@ public:
       logger->info("PostgreSQL: Registered new user '" + username +
                    "' with ID=" + std::to_string(newUserId));
 
-      // Log initial deposit transactions
       saveTransaction(newUserId, 75000.0, "INITIAL_DEPOSIT", "gold");
       saveTransaction(newUserId, 2.0, "INITIAL_DEPOSIT", "sweep");
 
       return newUserId;
     } catch (const std::exception &e) {
       logger->error("Registration Error: " + std::string(e.what()));
-      return -1; // -1 означає помилку (наприклад, такий юзер вже є)
+      return -1;
     }
   }
 
@@ -141,7 +135,7 @@ public:
                                        username, password);
 
       if (res.empty())
-        return -1; // Неправильний логін або пароль
+        return -1;
 
       return res[0][0].as<int>();
     } catch (const std::exception &e) {
@@ -160,7 +154,6 @@ public:
       pqxx::result res =
           W.exec_params("SELECT user_id FROM users WHERE username = $1", email);
       if (!res.empty()) {
-        // Юзер існує -> логінимо
         return res[0][0].as<int>();
       }
 
@@ -168,7 +161,7 @@ public:
       std::string fakeHash = "OAUTH_" + provider;
       pqxx::result insertRes = W.exec_params(
           "INSERT INTO users (username, password_hash, balance_gold, "
-          "balance_sweep) VALUES ($1, $2, 75000.0, 2.0) RETURNING user_id",
+          "balance_sweep) VALUES ($1, $2, 0.0, 0.0) RETURNING user_id",
           email, fakeHash);
       W.commit();
 
@@ -191,7 +184,6 @@ public:
     try {
       pqxx::connection conn(connectionString);
       pqxx::work W(conn);
-      // Default 0.0 if not found, use COALESCE if needed, but we check empty
       pqxx::result res = W.exec_params(
           "SELECT balance_gold, balance_sweep FROM users WHERE user_id = $1",
           userId);

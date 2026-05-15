@@ -5,7 +5,6 @@
 #include "SpdLogger.hpp"
 #include <memory>
 
-// IoC Контейнер
 class IoCContainer {
 private:
   std::shared_ptr<ILogger> logger;

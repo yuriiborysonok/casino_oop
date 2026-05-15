@@ -15,7 +15,6 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-# Fetch cpp-httplib (REST API) та nlohmann_json (для роботи з JSON)
 FetchContent_Declare(
   httplib
   URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.18.3.zip
@@ -31,11 +30,9 @@ FetchContent_MakeAvailable(nlohmann_json)
 add_library(casino_core src/Wallet.cpp)
 target_include_directories(casino_core PUBLIC include)
 
-# Основні мікросервіси (Wallet Service та Game Service)
 add_executable(wallet_service src/wallet_service.cpp)
 add_executable(game_service src/game_service.cpp)
 
-# Підключаємо libpqxx та libpq напряму через шляхи Homebrew (macOS ARM64)
 if(APPLE)
     target_include_directories(wallet_service PRIVATE /opt/homebrew/include /opt/homebrew/opt/libpq/include)
     target_link_directories(wallet_service PRIVATE /opt/homebrew/lib /opt/homebrew/opt/libpq/lib)

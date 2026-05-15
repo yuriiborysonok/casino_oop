@@ -58,7 +58,7 @@ int main() {
         // 1. COMMUNICATE WITH WALLET SERVICE TO GET BALANCE
         const char *wallet_host = std::getenv("WALLET_HOST");
         httplib::Client cli(wallet_host ? wallet_host : "localhost", 8081);
-        cli.set_connection_timeout(2, 0); // 2 seconds timeout
+        cli.set_connection_timeout(2, 0);
 
         auto bal_res = cli.Get("/api/balance?userId=" + std::to_string(userId));
         if (!bal_res || bal_res->status != 200) {
@@ -86,7 +86,7 @@ int main() {
         tx["currency"] = currency;
 
         if (totalWon > 0) {
-          tx["amount"] = totalWon - totalBetAmount; // Net profit
+          tx["amount"] = totalWon - totalBetAmount;
           tx["type"] = "WIN_Roulette";
         } else {
           tx["amount"] = totalBetAmount;
@@ -116,8 +116,6 @@ int main() {
         return;
       }
 
-      // 4. OLD SLOTS FALLBACK (if needed)
-      // Skipped for brevity, but we can return error
       throw std::invalid_argument(
           "Only Roulette is supported in Microservice mode");
 
