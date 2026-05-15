@@ -1,5 +1,0 @@
-if(EXISTS "/Users/bars/OOP NEW/CasinoPlatform/build/tests/casino_tests[1]_tests.cmake")
-  include("/Users/bars/OOP NEW/CasinoPlatform/build/tests/casino_tests[1]_tests.cmake")
-else()
-  add_test(casino_tests_NOT_BUILT casino_tests_NOT_BUILT)
-endif()
