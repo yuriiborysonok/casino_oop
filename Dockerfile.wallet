@@ -1,0 +1,31 @@
+# STAGE 1: Build
+FROM ubuntu:22.04 AS builder
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+RUN apt-get update && apt-get install -y \
+    build-essential cmake libpq-dev libpqxx-dev \
+    nlohmann-json3-dev libspdlog-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY CMakeLists.txt .
+COPY include/ include/
+COPY src/ src/
+COPY tests/ tests/
+
+RUN mkdir build && cd build && cmake .. && make wallet_service && make casino_tests && ./tests/casino_tests
+
+# STAGE 2: Runtime
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y \
+    libpq5 libpqxx-6.4 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libpqxx-dev || true
+
+WORKDIR /app
+COPY --from=builder /app/build/wallet_service .
+
+EXPOSE 8081
+CMD ["./wallet_service"]

@@ -57,8 +57,10 @@ int main() {
 
         // 1. COMMUNICATE WITH WALLET SERVICE TO GET BALANCE
         const char *wallet_host = std::getenv("WALLET_HOST");
-        httplib::Client cli(wallet_host ? wallet_host : "localhost", 8081);
-        cli.set_connection_timeout(2, 0);
+        std::string whost = wallet_host ? wallet_host : "casino-wallet.fly.dev";
+        httplib::SSLClient cli(whost);
+        cli.set_connection_timeout(10, 0);
+        cli.enable_server_certificate_verification(false);
 
         auto bal_res = cli.Get("/api/balance?userId=" + std::to_string(userId));
         if (!bal_res || bal_res->status != 200) {

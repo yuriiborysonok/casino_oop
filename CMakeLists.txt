@@ -15,6 +15,9 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+find_package(OpenSSL REQUIRED)
+add_compile_definitions(CPPHTTPLIB_OPENSSL_SUPPORT)
+
 FetchContent_Declare(
   httplib
   URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.18.3.zip
@@ -41,6 +44,6 @@ if(APPLE)
 endif()
 
 target_link_libraries(wallet_service PRIVATE casino_core httplib::httplib nlohmann_json::nlohmann_json pqxx pq)
-target_link_libraries(game_service PRIVATE casino_core httplib::httplib nlohmann_json::nlohmann_json)
+target_link_libraries(game_service PRIVATE casino_core httplib::httplib nlohmann_json::nlohmann_json OpenSSL::SSL OpenSSL::Crypto)
 
 add_subdirectory(tests)
