@@ -37,12 +37,28 @@ const clearBetsBtn = document.getElementById('clearBetsBtn');
 const rouletteWheel = document.getElementById('rouletteWheel');
 const rouletteResultLog = document.getElementById('rouletteResultLog');
 const ballWrapper = document.getElementById('ballWrapper');
-const rouletteBall = document.getElementById('rouletteBall');
+// Blackjack
+const blackjackGameContainer = document.getElementById('blackjackGameContainer');
+const bjDealerScore = document.getElementById('bjDealerScore');
+const bjDealerCards = document.getElementById('bjDealerCards');
+const bjPlayerScore = document.getElementById('bjPlayerScore');
+const bjPlayerCards = document.getElementById('bjPlayerCards');
+const bjChipSelector = document.getElementById('bjChipSelector');
+const bjBetDisplay = document.getElementById('bjBetDisplay');
+const bjDealBtn = document.getElementById('bjDealBtn');
+const bjHitBtn = document.getElementById('bjHitBtn');
+const bjStandBtn = document.getElementById('bjStandBtn');
+const bjResultLog = document.getElementById('bjResultLog');
+
+let blackjackPlayerCards = [];
+let blackjackDealerCards = [];
+let blackjackBetAmount = 0;
+let blackjackCurrentChip = 1;
 
 let currentUserId = null;
 let currentUsername = "";
 let isLoginMode = false;
-let selectedGameType = 'Roulette';
+let selectedGameType = 'Blackjack';
 let balanceGold = 0;
 let balanceSweep = 0;
 let currentCurrency = 'gold'; // 'gold' or 'sweep'
@@ -129,13 +145,77 @@ function placeBet(type, value, cellElement) {
   }
   
   let totalOnCell = existingBet ? existingBet.amount : currentChipValue;
-  chipEl.textContent = totalOnCell;
   
-  if (totalOnCell >= 100) chipEl.style.background = '#111';
-  else if (totalOnCell >= 50) chipEl.style.background = '#10b981';
-  else if (totalOnCell >= 10) chipEl.style.background = '#feca3b';
-  else if (totalOnCell >= 5) chipEl.style.background = '#d946ef';
-  else chipEl.style.background = '#3b9fff';
+  // Format the text representation
+  if (totalOnCell >= 1000000) {
+    chipEl.textContent = `${Math.floor(totalOnCell / 1000000)}kk`;
+    chipEl.style.fontSize = '0.65rem';
+  } else if (totalOnCell >= 100000) {
+    chipEl.textContent = `${Math.floor(totalOnCell / 1000)}k`;
+    chipEl.style.fontSize = '0.65rem';
+  } else if (totalOnCell >= 10000) {
+    chipEl.textContent = `${Math.floor(totalOnCell / 1000)}k`;
+    chipEl.style.fontSize = '0.75rem';
+  } else if (totalOnCell >= 1000) {
+    const formatted = totalOnCell / 1000;
+    chipEl.textContent = formatted % 1 === 0 ? `${formatted}k` : `${formatted.toFixed(1)}k`;
+    chipEl.style.fontSize = '0.75rem';
+  } else {
+    chipEl.textContent = totalOnCell;
+    chipEl.style.fontSize = '0.8rem';
+  }
+  
+  // Apply visual colors
+  if (totalOnCell >= 1000000) {
+    chipEl.style.background = 'radial-gradient(circle, #f59e0b 0%, #78350f 100%)';
+    chipEl.style.borderColor = '#fff';
+    chipEl.style.color = '#fff';
+    chipEl.style.boxShadow = '0 0 8px #f59e0b';
+  }
+  else if (totalOnCell >= 100000) {
+    chipEl.style.background = '#18181b';
+    chipEl.style.borderColor = '#feca3b';
+    chipEl.style.color = '#feca3b';
+    chipEl.style.boxShadow = 'none';
+  }
+  else if (totalOnCell >= 10000) {
+    chipEl.style.background = '#5b21b6';
+    chipEl.style.borderColor = '#c084fc';
+    chipEl.style.color = '#fff';
+    chipEl.style.boxShadow = 'none';
+  }
+  else if (totalOnCell >= 1000) {
+    chipEl.style.background = '#800020';
+    chipEl.style.borderColor = '#feca3b';
+    chipEl.style.color = '#fff';
+    chipEl.style.boxShadow = 'none';
+  }
+  else if (totalOnCell >= 100) {
+    chipEl.style.background = '#111';
+    chipEl.style.borderColor = 'rgba(255,255,255,0.5)';
+    chipEl.style.color = '#fff';
+    chipEl.style.boxShadow = 'none';
+  }
+  else if (totalOnCell >= 50) {
+    chipEl.style.background = '#10b981';
+    chipEl.style.borderColor = 'rgba(255,255,255,0.5)';
+    chipEl.style.color = '#fff';
+  }
+  else if (totalOnCell >= 10) {
+    chipEl.style.background = '#feca3b';
+    chipEl.style.borderColor = 'rgba(255,255,255,0.5)';
+    chipEl.style.color = '#000';
+  }
+  else if (totalOnCell >= 5) {
+    chipEl.style.background = '#d946ef';
+    chipEl.style.borderColor = 'rgba(255,255,255,0.5)';
+    chipEl.style.color = '#fff';
+  }
+  else {
+    chipEl.style.background = '#3b9fff';
+    chipEl.style.borderColor = 'rgba(255,255,255,0.5)';
+    chipEl.style.color = '#fff';
+  }
 }
 
 clearBetsBtn.addEventListener('click', () => {
@@ -221,6 +301,9 @@ spinRouletteBtn.addEventListener('click', async () => {
     // Wait for animation to finish (6s)
     setTimeout(() => {
       updateBalanceUI(data.new_balance_gold, data.new_balance_sweep);
+      fetchTransactionHistory(); // Refresh transactions
+      fetchAppInsights();        // Refresh DB insights
+      
       if (data.status === 'win') {
         rouletteResultLog.innerHTML = `Landed on <span style="color:#fff;font-size:1.5rem;">${winNum}</span>! 🎉 YOU WON $${data.won_amount.toFixed(2)}!`;
         rouletteResultLog.className = 'result-log console-log win shake';
@@ -259,7 +342,21 @@ gameCards.forEach(card => {
 
     if (selectedGameType === 'Roulette') {
       slotsGameContainer.classList.add('hidden');
+      blackjackGameContainer.classList.add('hidden');
       rouletteGameContainer.classList.remove('hidden');
+    } else if (selectedGameType === 'Slots') {
+      rouletteGameContainer.classList.add('hidden');
+      blackjackGameContainer.classList.add('hidden');
+      slotsGameContainer.classList.remove('hidden');
+      
+      activeGameTitle.textContent = "Classic Slots VIP";
+      activeGameImg.src = "/slots.png";
+    } else if (selectedGameType === 'Blackjack') {
+      rouletteGameContainer.classList.add('hidden');
+      slotsGameContainer.classList.add('hidden');
+      blackjackGameContainer.classList.remove('hidden');
+      
+      resetBlackjackUI();
     }
   });
 });
@@ -329,8 +426,191 @@ document.querySelectorAll('input[name="currency"]').forEach(radio => {
     renderBalance();
   });
 });
-function showGamePanel() { authOverlay.classList.add('hidden'); gamePanel.classList.remove('hidden'); lobbyView.classList.remove('hidden'); activeGameView.classList.add('hidden'); currentUserDisplay.textContent = currentUsername; }
-function showAuthPanel() { gamePanel.classList.add('hidden'); authOverlay.classList.remove('hidden'); currentUserId = null; currentUsername = ""; authLog.textContent = ""; setAuthMode(false); }
+// === MONITORING, TRANSACTION HISTORY & APP INSIGHTS INTEGRATION ===
+const txList = document.getElementById('txList');
+const statTotalUsers = document.getElementById('statTotalUsers');
+const statGoldVol = document.getElementById('statGoldVol');
+const statSweepVol = document.getElementById('statSweepVol');
+const statWinRatio = document.getElementById('statWinRatio');
+const globalActivityList = document.getElementById('globalActivityList');
+const healthPulse = document.getElementById('healthPulse');
+const healthWalletStatus = document.getElementById('healthWalletStatus');
+const healthDbStatus = document.getElementById('healthDbStatus');
+const healthUptime = document.getElementById('healthUptime');
+
+// 1. Fetch User Transaction History
+async function fetchTransactionHistory() {
+  if (!currentUserId) return;
+  try {
+    const response = await fetch(`${API_URL}/transactions?userId=${currentUserId}`);
+    if (!response.ok) throw new Error("Failed to load");
+    const data = await response.json();
+    
+    if (data.length === 0) {
+      txList.innerHTML = `<div class="no-tx-placeholder">No transactions found. Make a bet to start!</div>`;
+      return;
+    }
+    
+    txList.innerHTML = data.map(tx => {
+      let cssClass = "deposit-tx";
+      let icon = "fa-money-bill-wave";
+      let sign = "+";
+      
+      if (tx.type.includes("WIN")) {
+        cssClass = "win-tx";
+        icon = "fa-circle-check";
+        sign = "+";
+      } else if (tx.type.includes("LOSE") || tx.type.includes("BET")) {
+        cssClass = "lose-tx";
+        icon = "fa-circle-minus";
+        sign = "-";
+      }
+      
+      const currencySymbol = tx.currency === "sweep" ? "SC" : "GC";
+      const formattedAmount = `${sign}${tx.amount.toLocaleString()} ${currencySymbol}`;
+      const formattedDate = new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      return `
+        <div class="tx-item ${cssClass}">
+          <div class="tx-info-left">
+            <span class="tx-type"><i class="fa-solid ${icon}"></i> ${tx.type}</span>
+            <span class="tx-time">${formattedDate}</span>
+          </div>
+          <span class="tx-amount ${cssClass}">${formattedAmount}</span>
+        </div>
+      `;
+    }).join("");
+  } catch (err) {
+    txList.innerHTML = `<div class="no-tx-placeholder" style="color:#ff4b4b;">Failed to load transaction history</div>`;
+  }
+}
+
+// 2. Fetch App Insights (Database Stats)
+async function fetchAppInsights() {
+  try {
+    const response = await fetch(`${API_URL}/insights`);
+    if (!response.ok) throw new Error("Failed to load");
+    const data = await response.json();
+    
+    statTotalUsers.textContent = data.total_users;
+    statGoldVol.textContent = `${(data.gold_volume || 0).toLocaleString()} GC`;
+    statSweepVol.textContent = `${(data.sweep_volume || 0).toLocaleString()} SC`;
+    
+    const totalGames = (data.total_wins || 0) + (data.total_losses || 0);
+    if (totalGames > 0) {
+      const winPct = ((data.total_wins / totalGames) * 100).toFixed(0);
+      statWinRatio.textContent = `${winPct}% Wins (${data.total_wins}/${data.total_losses})`;
+    } else {
+      statWinRatio.textContent = "No games yet";
+    }
+
+    if (data.recent_transactions && data.recent_transactions.length > 0) {
+      globalActivityList.innerHTML = data.recent_transactions.slice(0, 5).map(tx => {
+        let typeBadge = tx.type.includes("WIN") ? `<span style="color:#10b981;">WIN</span>` : `<span style="color:#ff4b4b;">LOSE</span>`;
+        if (tx.type.includes("INITIAL")) typeBadge = `<span style="color:#3b9fff;">NEW</span>`;
+        
+        const currencySymbol = tx.currency === "sweep" ? "SC" : "GC";
+        return `
+          <div class="activity-item">
+            <span class="activity-item-type">${typeBadge} | ${tx.type.replace("WIN_","").replace("LOSE_","")}</span>
+            <span>${tx.amount.toLocaleString()} ${currencySymbol}</span>
+          </div>
+        `;
+      }).join("");
+    } else {
+      globalActivityList.innerHTML = `<div style="color:#888;font-size:0.8rem;text-align:center;padding:10px 0;">No global activity recorded yet</div>`;
+    }
+  } catch (err) {
+    statTotalUsers.textContent = "Err";
+    statGoldVol.textContent = "Err";
+    statSweepVol.textContent = "Err";
+    statWinRatio.textContent = "Err";
+    globalActivityList.innerHTML = `<div style="color:#ff4b4b;font-size:0.8rem;text-align:center;padding:10px 0;">Insights loading failed</div>`;
+  }
+}
+
+// 3. Health check for Wallet service & Postgres database
+async function checkInfrastructureHealth() {
+  try {
+    // Note: Gateway forwards /health to https://casino-wallet.fly.dev/health
+    const response = await fetch(`/health`);
+    if (!response.ok) throw new Error("Offline");
+    const data = await response.json();
+    
+    if (data.status === "ok") {
+      healthPulse.className = "pulse-indicator online";
+      
+      healthWalletStatus.textContent = "ONLINE";
+      healthWalletStatus.className = "status-badge success";
+      
+      if (data.database === "connected") {
+        healthDbStatus.textContent = "CONNECTED";
+        healthDbStatus.className = "status-badge success";
+      } else {
+        healthDbStatus.textContent = "DISCONNECTED";
+        healthDbStatus.className = "status-badge danger";
+      }
+      
+      const uptimeMin = Math.floor(data.uptime_seconds / 60);
+      const uptimeSec = data.uptime_seconds % 60;
+      healthUptime.textContent = `${uptimeMin}m ${uptimeSec}s`;
+    } else {
+      throw new Error("Degraded");
+    }
+  } catch (err) {
+    healthPulse.className = "pulse-indicator offline";
+    
+    healthWalletStatus.textContent = "OFFLINE";
+    healthWalletStatus.className = "status-badge danger";
+    
+    healthDbStatus.textContent = "UNREACHABLE";
+    healthDbStatus.className = "status-badge danger";
+    
+    healthUptime.textContent = "N/A";
+  }
+}
+
+// Attach Refresh button listeners
+document.getElementById('refreshTxBtn').addEventListener('click', fetchTransactionHistory);
+document.getElementById('refreshInsightsBtn').addEventListener('click', fetchAppInsights);
+
+function refreshAllDashboards() {
+  fetchTransactionHistory();
+  fetchAppInsights();
+  checkInfrastructureHealth();
+}
+
+// Set up periodic status monitoring
+setInterval(checkInfrastructureHealth, 20000); // Check health every 20 seconds
+setInterval(fetchAppInsights, 30000);          // Refresh DB insights every 30 seconds
+
+function showGamePanel() { 
+  authOverlay.classList.add('hidden'); 
+  gamePanel.classList.remove('hidden'); 
+  lobbyView.classList.remove('hidden'); 
+  activeGameView.classList.add('hidden'); 
+  currentUserDisplay.textContent = currentUsername; 
+  
+  // Cache the session in localStorage
+  localStorage.setItem('casino_user_id', currentUserId);
+  localStorage.setItem('casino_username', currentUsername);
+  
+  refreshAllDashboards(); // Trigger loading of dashboards on login
+}
+
+function showAuthPanel() { 
+  gamePanel.classList.add('hidden'); 
+  authOverlay.classList.remove('hidden'); 
+  currentUserId = null; 
+  currentUsername = ""; 
+  authLog.textContent = ""; 
+  
+  // Clear cached session
+  localStorage.removeItem('casino_user_id');
+  localStorage.removeItem('casino_username');
+  
+  setAuthMode(false); 
+}
 function validateEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
 submitAuthBtn.addEventListener('click', async () => {
@@ -375,6 +655,8 @@ spinBtn.addEventListener('click', async () => {
     if (!response.ok) throw new Error(data.error);
 
     updateBalanceUI(data.new_balance_gold, data.new_balance_sweep);
+    fetchTransactionHistory(); // Refresh transactions
+    fetchAppInsights();        // Refresh DB insights
     if (data.status === 'win') { resultLog.textContent = `🎉 JACKPOT! +$${data.won_amount.toFixed(2)}`; resultLog.className = 'result-log console-log win shake'; }
     else { resultLog.textContent = `💔 You lost $${betAmount.toFixed(2)}`; resultLog.className = 'result-log console-log lose'; }
   } catch (err) { resultLog.textContent = err.message; resultLog.className = 'result-log console-log error shake'; }
@@ -400,8 +682,291 @@ function handleGoogleAuth(response) {
   if (payload && payload.email) { socialLogin(payload.email, "google"); } else { authLog.textContent = 'Google Auth Error'; authLog.style.color = '#ff4b4b'; }
 }
 
+// ==========================================================================
+// BLACKJACK PRO INTERACTIVE LOGIC
+// ==========================================================================
+function resetBlackjackUI() {
+  blackjackPlayerCards = [];
+  blackjackDealerCards = [];
+  blackjackBetAmount = 0;
+  bjBetDisplay.textContent = '0';
+  bjDealerScore.textContent = '0';
+  bjPlayerScore.textContent = '0';
+  bjDealerCards.innerHTML = '<div class="card-placeholder">Dealer cards go here</div>';
+  bjPlayerCards.innerHTML = '<div class="card-placeholder">Your cards go here</div>';
+  bjResultLog.textContent = 'Choose a bet and click DEAL HAND to start!';
+  bjResultLog.className = 'result-log console-log';
+  bjDealBtn.disabled = false;
+  bjDealBtn.classList.remove('hidden');
+  bjHitBtn.classList.add('hidden');
+  bjStandBtn.classList.add('hidden');
+}
+
+function bjRenderHand(container, cards, isDealer, isFinished) {
+  container.innerHTML = '';
+  cards.forEach((card, idx) => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'card-item';
+    
+    // Hidden dealer card logic
+    if (isDealer && idx === 1 && !isFinished) {
+      cardEl.classList.add('face-down');
+      container.appendChild(cardEl);
+      return;
+    }
+    
+    const suit = card.suit;
+    if (suit === '♥' || suit === '♦') {
+      cardEl.classList.add('red-suit');
+    } else {
+      cardEl.classList.add('black-suit');
+    }
+    
+    cardEl.innerHTML = `
+      <div class="card-top">${card.value}<br>${suit}</div>
+      <div class="card-suit-center">${suit}</div>
+      <div class="card-bottom">${card.value}<br>${suit}</div>
+    `;
+    container.appendChild(cardEl);
+  });
+}
+
+// Bind Chip Selector for Blackjack
+bjChipSelector.addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  
+  bjChipSelector.querySelectorAll('.chip').forEach(el => el.classList.remove('selected'));
+  chip.classList.add('selected');
+  blackjackCurrentChip = parseInt(chip.getAttribute('data-value'));
+  
+  blackjackBetAmount += blackjackCurrentChip;
+  bjBetDisplay.textContent = blackjackBetAmount.toLocaleString();
+});
+
+// Clear Bet on click of the display
+bjBetDisplay.parentElement.addEventListener('click', () => {
+  blackjackBetAmount = 0;
+  bjBetDisplay.textContent = '0';
+});
+
+bjDealBtn.addEventListener('click', async () => {
+  if (blackjackBetAmount <= 0) {
+    bjResultLog.textContent = 'Please select a chip to place a bet first!';
+    bjResultLog.className = 'result-log console-log error shake';
+    setTimeout(() => bjResultLog.classList.remove('shake'), 400);
+    return;
+  }
+  
+  const currentBalance = currentCurrency === 'gold' ? balanceGold : balanceSweep;
+  if (blackjackBetAmount > currentBalance) {
+    bjResultLog.textContent = `Insufficient balance (${currentCurrency.toUpperCase()}).`;
+    bjResultLog.className = 'result-log console-log error shake';
+    setTimeout(() => bjResultLog.classList.remove('shake'), 400);
+    return;
+  }
+  
+  bjDealBtn.disabled = true;
+  bjResultLog.textContent = 'Dealing hands...';
+  bjResultLog.className = 'result-log console-log';
+  
+  try {
+    const response = await fetch(`${API_URL}/blackjack/deal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUserId,
+        betAmount: blackjackBetAmount,
+        currency: currentCurrency
+      })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    
+    blackjackPlayerCards = data.playerCards;
+    blackjackDealerCards = data.dealerCards;
+    
+    bjRenderHand(bjPlayerCards, blackjackPlayerCards, false, false);
+    bjRenderHand(bjDealerCards, blackjackDealerCards, true, false);
+    
+    bjPlayerScore.textContent = data.playerScore;
+    bjDealerScore.textContent = '?'; // First card value only
+    
+    if (data.status === 'blackjack') {
+      updateBalanceUI(data.new_balance_gold, data.new_balance_sweep);
+      fetchTransactionHistory();
+      fetchAppInsights();
+      
+      bjRenderHand(bjDealerCards, blackjackDealerCards, true, true);
+      bjDealerScore.textContent = data.dealerScore;
+      
+      bjResultLog.textContent = `🎉 NATURAL BLACKJACK! Payout: $${data.wonAmount.toFixed(2)}`;
+      bjResultLog.className = 'result-log console-log win shake';
+      bjDealBtn.classList.remove('hidden');
+      bjDealBtn.disabled = false;
+    } else {
+      bjDealBtn.classList.add('hidden');
+      bjHitBtn.classList.remove('hidden');
+      bjStandBtn.classList.remove('hidden');
+      bjResultLog.textContent = 'Hit or Stand?';
+    }
+    
+  } catch (err) {
+    bjResultLog.textContent = err.message;
+    bjResultLog.className = 'result-log console-log error';
+    bjDealBtn.disabled = false;
+  }
+});
+
+bjHitBtn.addEventListener('click', async () => {
+  bjHitBtn.disabled = true;
+  bjStandBtn.disabled = true;
+  
+  try {
+    const response = await fetch(`${API_URL}/blackjack/hit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUserId,
+        betAmount: blackjackBetAmount,
+        currency: currentCurrency,
+        playerCards: blackjackPlayerCards,
+        dealerCards: blackjackDealerCards
+      })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    
+    blackjackPlayerCards = data.playerCards;
+    bjRenderHand(bjPlayerCards, blackjackPlayerCards, false, false);
+    bjPlayerScore.textContent = data.playerScore;
+    
+    if (data.status === 'lose') {
+      updateBalanceUI(data.new_balance_gold, data.new_balance_sweep);
+      fetchTransactionHistory();
+      fetchAppInsights();
+      
+      bjRenderHand(bjDealerCards, blackjackDealerCards, true, true);
+      bjDealerScore.textContent = data.dealerScore;
+      
+      bjResultLog.textContent = `💥 BUST! You went over 21. Lost $${blackjackBetAmount.toFixed(2)}`;
+      bjResultLog.className = 'result-log console-log lose';
+      
+      bjHitBtn.classList.add('hidden');
+      bjStandBtn.classList.add('hidden');
+      bjDealBtn.classList.remove('hidden');
+      bjDealBtn.disabled = false;
+    } else {
+      bjResultLog.textContent = 'Hit or Stand?';
+    }
+  } catch (err) {
+    bjResultLog.textContent = err.message;
+    bjResultLog.className = 'result-log console-log error';
+  } finally {
+    bjHitBtn.disabled = false;
+    bjStandBtn.disabled = false;
+  }
+});
+
+bjStandBtn.addEventListener('click', async () => {
+  bjHitBtn.disabled = true;
+  bjStandBtn.disabled = true;
+  bjResultLog.textContent = "Dealer's turn...";
+  
+  try {
+    const response = await fetch(`${API_URL}/blackjack/stand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: currentUserId,
+        betAmount: blackjackBetAmount,
+        currency: currentCurrency,
+        playerCards: blackjackPlayerCards,
+        dealerCards: blackjackDealerCards
+      })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    
+    blackjackDealerCards = data.dealerCards;
+    bjRenderHand(bjDealerCards, blackjackDealerCards, true, true);
+    bjDealerScore.textContent = data.dealerScore;
+    
+    updateBalanceUI(data.new_balance_gold, data.new_balance_sweep);
+    fetchTransactionHistory();
+    fetchAppInsights();
+    
+    if (data.status === 'win') {
+      bjResultLog.textContent = `🎉 YOU WON! Dealer had ${data.dealerScore}. +$${blackjackBetAmount.toFixed(2)}`;
+      bjResultLog.className = 'result-log console-log win shake';
+    } else if (data.status === 'lose') {
+      bjResultLog.textContent = `💔 Dealer wins with ${data.dealerScore}. Lost $${blackjackBetAmount.toFixed(2)}`;
+      bjResultLog.className = 'result-log console-log lose';
+    } else {
+      bjResultLog.textContent = `🤝 PUSH! It is a tie. Bet returned.`;
+      bjResultLog.className = 'result-log console-log';
+    }
+    
+    bjHitBtn.classList.add('hidden');
+    bjStandBtn.classList.add('hidden');
+    bjDealBtn.classList.remove('hidden');
+    bjDealBtn.disabled = false;
+    
+  } catch (err) {
+    bjResultLog.textContent = err.message;
+    bjResultLog.className = 'result-log console-log error';
+  } finally {
+    bjHitBtn.disabled = false;
+    bjStandBtn.disabled = false;
+  }
+});
+
+
+
+// 4. Auto-restore session from localStorage on refresh
+async function restoreSession() {
+  const savedUserId = localStorage.getItem('casino_user_id');
+  const savedUsername = localStorage.getItem('casino_username');
+  
+  if (!savedUserId || !savedUsername) {
+    return; // No saved session, stay on login screen
+  }
+  
+  try {
+    // Show temporary overlay loading status
+    authLog.textContent = 'Restoring session...';
+    authLog.style.color = '#feca3b';
+    
+    const response = await fetch(`${API_URL}/balance?userId=${savedUserId}`);
+    if (!response.ok) throw new Error("Session invalid");
+    const data = await response.json();
+    
+    currentUserId = parseInt(savedUserId);
+    currentUsername = savedUsername;
+    
+    updateBalanceUI(data.balance_gold, data.balance_sweep);
+    showGamePanel();
+  } catch (err) {
+    // If restoration failed (server error or deleted user), clear session
+    localStorage.removeItem('casino_user_id');
+    localStorage.removeItem('casino_username');
+    authLog.textContent = '';
+  }
+}
+
 window.onload = function () {
-  if (typeof google !== 'undefined') { google.accounts.id.initialize({ client_id: "824007922604-pqvviecs5t3cf377s4o8qrirhsdl8gho.apps.googleusercontent.com", callback: handleGoogleAuth }); }
+  if (typeof google !== 'undefined') { 
+    google.accounts.id.initialize({ 
+      client_id: "824007922604-pqvviecs5t3cf377s4o8qrirhsdl8gho.apps.googleusercontent.com", 
+      callback: handleGoogleAuth 
+    }); 
+  }
+  
+  // Restore session if available
+  restoreSession();
 };
 
 document.querySelector('.social-btn.google').addEventListener('click', (e) => {

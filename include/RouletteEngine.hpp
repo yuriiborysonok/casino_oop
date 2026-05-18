@@ -103,7 +103,33 @@ public:
     
     // Returns {winning_number, total_payout}
     std::pair<int, double> spin() {
-        int winningNumber = std::rand() % 37;
+        int winningNumber = -1;
+        
+        // Read "rigged" environment parameters for custom chances
+        const char* envBoostNum = std::getenv("ROULETTE_BOOST_NUMBER");
+        const char* envBoostChance = std::getenv("ROULETTE_BOOST_CHANCE");
+        
+        if (envBoostNum && envBoostChance) {
+            try {
+                int targetNumber = std::stoi(envBoostNum);
+                int boostPercentage = std::stoi(envBoostChance); // 0 to 100
+                
+                if (targetNumber >= 0 && targetNumber <= 36 && boostPercentage >= 0 && boostPercentage <= 100) {
+                    int roll = std::rand() % 100; // 0 to 99
+                    if (roll < boostPercentage) {
+                        winningNumber = targetNumber; // Forced VIP win!
+                    }
+                }
+            } catch (...) {
+                // Fail-safe to normal behavior if variables are corrupt
+            }
+        }
+        
+        // If boost didn't trigger, roll a normal fair draw (1/37 chance)
+        if (winningNumber == -1) {
+            winningNumber = std::rand() % 37;
+        }
+        
         double totalPayout = 0;
         for (const auto& bet : bets) {
             totalPayout += bet->calculatePayout(winningNumber);

@@ -1,0 +1,9 @@
+CompileFlags:
+  Add: [
+    "-I/Users/bars/OOP NEW/CasinoPlatform/include",
+    "-isystem", "/opt/homebrew/include",
+    "-isystem", "/opt/homebrew/opt/libpq/include",
+    "-I/Users/bars/OOP NEW/CasinoPlatform/build/_deps/nlohmann_json-src/include",
+    "-I/Users/bars/OOP NEW/CasinoPlatform/build/_deps/httplib-src",
+    "-std=c++20"
+  ]

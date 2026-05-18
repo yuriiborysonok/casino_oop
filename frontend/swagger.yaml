@@ -1,0 +1,353 @@
+openapi: 3.0.3
+info:
+  title: SocialGrand Casino Microservices API
+  description: API specification for Casino Roulette microservices architecture.
+  version: 1.0.0
+servers:
+  - url: https://casino-gateway.fly.dev
+    description: Production API Gateway
+  - url: http://localhost:8080
+    description: Local Docker Compose Gateway
+paths:
+  /api/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: player@example.com
+                password:
+                  type: string
+                  example: securepass123
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Registration successful
+                  user_id:
+                    type: integer
+                    example: 1
+                  balance_gold:
+                    type: number
+                    example: 75000.0
+                  balance_sweep:
+                    type: number
+                    example: 2.0
+        '400':
+          description: User already exists or invalid request
+
+  /api/login:
+    post:
+      summary: Authenticate a user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: player@example.com
+                password:
+                  type: string
+                  example: securepass123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  user_id:
+                    type: integer
+                    example: 1
+                  balance_gold:
+                    type: number
+                    example: 75000.0
+                  balance_sweep:
+                    type: number
+                    example: 2.0
+        '401':
+          description: Invalid username or password
+
+  /api/social_login:
+    post:
+      summary: OAuth Social Login (Google / Facebook)
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - provider
+              properties:
+                email:
+                  type: string
+                  example: oauth_player@gmail.com
+                provider:
+                  type: string
+                  example: google
+      responses:
+        '200':
+          description: Social Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
+                  user_id:
+                    type: integer
+                    example: 3
+                  balance_gold:
+                    type: number
+                    example: 75000.0
+                  balance_sweep:
+                    type: number
+                    example: 2.0
+
+  /api/balance:
+    get:
+      summary: Get user balances
+      tags:
+        - Wallet
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance_gold:
+                    type: number
+                    example: 75000.0
+                  balance_sweep:
+                    type: number
+                    example: 2.0
+
+  /api/spin:
+    post:
+      summary: Place a bet and spin the Roulette wheel
+      tags:
+        - Game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - gameType
+                - currency
+                - bets
+              properties:
+                userId:
+                  type: integer
+                  example: 1
+                gameType:
+                  type: string
+                  example: Roulette
+                currency:
+                  type: string
+                  example: gold
+                bets:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - value
+                      - amount
+                    properties:
+                      type:
+                        type: string
+                        example: color
+                      value:
+                        type: string
+                        example: red
+                      amount:
+                        type: number
+                        example: 1000.0
+      responses:
+        '200':
+          description: Spin completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  game:
+                    type: string
+                    example: Roulette
+                  winning_number:
+                    type: integer
+                    example: 3
+                  status:
+                    type: string
+                    example: win
+                  won_amount:
+                    type: number
+                    example: 2000.0
+                  new_balance_gold:
+                    type: number
+                    example: 76000.0
+                  new_balance_sweep:
+                    type: number
+                    example: 2.0
+        '400':
+          description: Insufficient funds or invalid bet details
+
+  /api/transactions:
+    get:
+      summary: Get recent user transaction history
+      tags:
+        - Wallet
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 12
+                    amount:
+                      type: number
+                      example: 1000.0
+                    type:
+                      type: string
+                      example: WIN_Roulette
+                    currency:
+                      type: string
+                      example: gold
+                    created_at:
+                      type: string
+                      example: "2026-05-17 15:56:49"
+
+  /api/insights:
+    get:
+      summary: Get platform database stats and insights
+      tags:
+        - Insights (App Insights)
+      responses:
+        '200':
+          description: Database stats and recent activity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_users:
+                    type: integer
+                    example: 10
+                  total_transactions:
+                    type: integer
+                    example: 120
+                  total_wins:
+                    type: integer
+                    example: 45
+                  total_losses:
+                    type: integer
+                    example: 75
+                  gold_volume:
+                    type: number
+                    example: 1540000.0
+                  sweep_volume:
+                    type: number
+                    example: 450.0
+                  recent_transactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: WIN_Roulette
+                        currency:
+                          type: string
+                          example: gold
+                        amount:
+                          type: number
+                          example: 2000.0
+                        created_at:
+                          type: string
+                          example: "2026-05-17 15:56:49"
+
+  /health:
+    get:
+      summary: Health check endpoint
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: wallet-service
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                  database:
+                    type: string
+                    example: connected

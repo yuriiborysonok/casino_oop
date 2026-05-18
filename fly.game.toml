@@ -13,6 +13,8 @@ primary_region = 'fra'
 
 [env]
   WALLET_HOST = "casino-wallet.fly.dev"
+  ROULETTE_BOOST_NUMBER = ""
+  ROULETTE_BOOST_CHANCE = ""
 
 [[vm]]
   memory = '256mb'

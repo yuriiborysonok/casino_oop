@@ -1,4 +1,16 @@
+# === C++ Build & Object Files ===
 build/
+bin/
+lib/
+_deps/
+*.o
+*.a
+*.dylib
+*.so
+*.out
+*.app
+
+# === CMake Artifacts ===
 CMakeCache.txt
 CMakeFiles/
 CMakeScripts/
@@ -6,19 +18,55 @@ Makefile
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
-_deps/
-*.o
-*.a
-*.dylib
-*.so
+*.cmake
+
+# === Executables (Binaries) ===
 casino_server
 casino_tests
+wallet_service
+game_service
+
+# === System Files ===
 .DS_Store
-frontend/node_modules/
-frontend/dist/
+**/.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === IDEs and Editor Configs ===
 .vscode/
 .idea/
-.env
+.clangd/
 .cache/
-.clangd
-*.md
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# === Frontend & Node JS ===
+frontend/node_modules/
+frontend/dist/
+node_modules/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Environments & Secrets ===
+.env
+.env.*
+*.pem
+*.key
+*.cert
+*.crt
+fly-*.toml
+/nginx/nginx.conf.backup
+
+# === Temporary Scratch / Task Files ===
+# Ігноруємо тільки тимчасові файли та плани розробки, 
+# але залишаємо README.md та документацію docs/
+implementation_plan.md
+walkthrough.md
+task.md

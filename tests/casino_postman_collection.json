@@ -1,0 +1,389 @@
+{
+	"info": {
+		"_postman_id": "a9d8c7b6-e5d4-4c3b-b2a1-9c8b7a6f5e4d",
+		"name": "SocialGrand Casino Integration Tests",
+		"description": "Integration and health check tests for Casino microservices (Gateway -> Game & Wallet Services)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Monitoring & Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON and healthy\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"ok\");",
+									"    pm.expect(jsonData.database).to.eql(\"connected\");",
+									"    pm.expect(jsonData.service).to.eql(\"wallet-service\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Database Insights (Admin Stats)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Verify stats structure\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"total_users\");",
+									"    pm.expect(jsonData).to.have.property(\"total_transactions\");",
+									"    pm.expect(jsonData).to.have.property(\"gold_volume\");",
+									"    pm.expect(jsonData.recent_transactions).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/insights",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"insights"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Journey (Auth & Play)",
+			"item": [
+				{
+					"name": "Register New User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate random email for registration to avoid conflicts",
+									"const randomNum = Math.floor(Math.random() * 100000);",
+									"pm.collectionVariables.set(\"test_username\", `player_${randomNum}@test.com`);",
+									"pm.collectionVariables.set(\"test_password\", \"SecretPass123!\");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Registration returns 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"User registered successfully with welcome bonus\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"Registration successful\");",
+									"    pm.expect(jsonData.user_id).to.be.a('number');",
+									"    pm.expect(jsonData.balance_gold).to.eql(75000.0);",
+									"    pm.expect(jsonData.balance_sweep).to.eql(2.0);",
+									"    ",
+									"    // Save generated user_id to collection variables for subsequent requests",
+									"    pm.collectionVariables.set(\"current_user_id\", jsonData.user_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{test_username}}\",\n    \"password\": \"{{test_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Login returns 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Login body contains valid user info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"Login successful\");",
+									"    pm.expect(jsonData.user_id).to.eql(parseInt(pm.collectionVariables.get(\"current_user_id\")));",
+									"    pm.expect(jsonData).to.have.property(\"balance_gold\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{test_username}}\",\n    \"password\": \"{{test_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Balance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Verify initial balance\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.balance_gold).to.be.a('number');",
+									"    pm.expect(jsonData.balance_sweep).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/balance?userId={{current_user_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"balance"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{current_user_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Place Bet and Spin (Roulette)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Spin completed with 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Roulette Engine works correctly\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.game).to.eql(\"Roulette\");",
+									"    pm.expect(jsonData.winning_number).to.be.within(0, 36);",
+									"    pm.expect([\"win\", \"lose\"]).to.include(jsonData.status);",
+									"    pm.expect(jsonData.won_amount).to.be.a('number');",
+									"    pm.expect(jsonData.new_balance_gold).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": {{current_user_id}},\n    \"gameType\": \"Roulette\",\n    \"currency\": \"gold\",\n    \"bets\": [\n        {\n            \"type\": \"color\",\n            \"value\": \"red\",\n            \"amount\": 1000\n        },\n        {\n            \"type\": \"number\",\n            \"value\": \"17\",\n            \"amount\": 500\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/spin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"spin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction History",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"History contains roulette transactions\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"    pm.expect(jsonData.length).to.be.above(0);",
+									"    // First transaction should be our recent roulette outcome",
+									"    pm.expect(jsonData[0]).to.have.property(\"amount\");",
+									"    pm.expect(jsonData[0]).to.have.property(\"type\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions?userId={{current_user_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"transactions"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{current_user_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://casino-gateway.fly.dev",
+			"type": "string"
+		},
+		{
+			"key": "current_user_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "test_username",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "test_password",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

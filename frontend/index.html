@@ -1,187 +1,333 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SocialGrand Casino</title>
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
-  </head>
-  <body>
-    <div id="app">
-      <!-- Auth Modal Background -->
-      <div id="authOverlay" class="auth-overlay">
-        <!-- Split Modal Container -->
-        <div class="auth-modal">
-          <!-- Left Side: Banner -->
-          <div class="auth-banner">
-            <img src="/banner.png" alt="Promo Banner" class="banner-img" />
-            <div class="banner-content">
-              <h2>Claim Your<br>Welcome Offer</h2>
-              <div class="banner-badges">
-                <span class="badge gold"><i class="fa-solid fa-shield-halved"></i> 75K Gold</span>
-                <span class="badge blue"><i class="fa-solid fa-shield-halved"></i> 2 Sweep</span>
-              </div>
-            </div>
-          </div>
 
-          <!-- Right Side: Form -->
-          <div class="auth-form-container">
-            <button class="close-btn"><i class="fa-solid fa-xmark"></i></button>
-            <h1 id="authTitle">Sign up</h1>
-            <div class="input-with-icon">
-              <i class="fa-regular fa-envelope"></i>
-              <input type="text" id="usernameInput" placeholder="Email" autocomplete="off" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SocialGrand Casino</title>
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Auth Modal Background -->
+    <div id="authOverlay" class="auth-overlay">
+      <!-- Split Modal Container -->
+      <div class="auth-modal">
+        <!-- Left Side: Banner -->
+        <div class="auth-banner">
+          <img src="/banner.png" alt="Promo Banner" class="banner-img" />
+          <div class="banner-content">
+            <h2>Claim Your<br>Welcome Offer</h2>
+            <div class="banner-badges">
+              <span class="badge gold"><i class="fa-solid fa-shield-halved"></i> 75K Gold</span>
+              <span class="badge blue"><i class="fa-solid fa-shield-halved"></i> 2 Sweep</span>
             </div>
-            <div class="input-with-icon">
-              <i class="fa-solid fa-key"></i>
-              <input type="password" id="passwordInput" placeholder="Password" />
-              <i class="fa-regular fa-eye-slash toggle-password"></i>
-            </div>
-            <button id="submitAuthBtn" class="primary-btn">CONTINUE</button>
-            <div class="social-buttons">
-              <button class="social-btn google"><img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" /> Google</button>
-              <button class="social-btn facebook"><i class="fa-brands fa-facebook"></i> Facebook</button>
-            </div>
-            <div id="signupTerms" class="terms-container">
-              <label class="checkbox-label">
-                <input type="checkbox" id="ageCheck" />
-                <span class="terms-text">I confirm that I am at least 21 years old and reside in a Permitted Territory. I have read and agree to the Terms & Conditions, Privacy Policy, and confirm that I do not currently have an existing account.</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" id="marketingCheck" />
-                <span class="terms-text">I consent to receive marketing communications, promotional messages, and partnership offers via SMS, phone, and messengers.</span>
-              </label>
-            </div>
-            <div class="auth-footer">
-              <span id="authToggleText">Already have an account?</span> 
-              <a href="#" id="toggleAuthMode">Log in</a>
-            </div>
-            <div id="authLog" class="result-log" style="margin-top:10px;"></div>
           </div>
         </div>
-      </div>
 
-      <!-- Full Dashboard -->
-      <div id="gamePanel" class="dashboard hidden">
-        <!-- Header -->
-        <header class="navbar">
-          <div class="nav-left">
-            <div class="logo">SOCIALGRAND</div>
+        <!-- Right Side: Form -->
+        <div class="auth-form-container">
+          <button class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+          <h1 id="authTitle">Sign up</h1>
+          <div class="input-with-icon">
+            <i class="fa-regular fa-envelope"></i>
+            <input type="text" id="usernameInput" placeholder="Email" autocomplete="off" />
           </div>
-          <div class="nav-right">
-            <div class="profile-pill">
-              <span class="player-name"><i class="fa-solid fa-user"></i> <span id="currentUser"></span></span>
-              <span class="player-divider">|</span>
-              <div class="currency-toggle">
-                <input type="radio" id="currencyGold" name="currency" value="gold" checked>
-                <label for="currencyGold" class="toggle-label gold-label"><i class="fa-solid fa-shield-halved"></i> Gold</label>
-                
-                <input type="radio" id="currencySweep" name="currency" value="sweep">
-                <label for="currencySweep" class="toggle-label sweep-label"><i class="fa-solid fa-shield-halved"></i> Sweep</label>
-                <div class="toggle-bg"></div>
-              </div>
-              <span class="player-balance"><span id="balanceDisplay">0</span> <span id="balanceIcon"><i class="fa-solid fa-shield-halved" style="color: #feca3b;"></i></span></span>
-            </div>
-            <button id="logoutBtn" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-key"></i>
+            <input type="password" id="passwordInput" placeholder="Password" />
+            <i class="fa-regular fa-eye-slash toggle-password"></i>
           </div>
-        </header>
-
-        <main class="dashboard-content">
-          <!-- LOBBY VIEW -->
-          <div id="lobbyView">
-            <section class="hero-banner">
-              <img src="/lobby_banner.png" alt="Welcome Offer" class="hero-img" />
-              <div class="hero-overlay">
-                <div class="hero-text">
-                  <h2>Claim Your<br>Welcome Offer</h2>
-                  <div class="hero-badges">
-                    <span class="badge gold"><i class="fa-solid fa-shield-halved"></i> 75,000 Gold</span>
-                    <span class="badge blue"><i class="fa-solid fa-shield-halved"></i> 2 Sweep For FREE</span>
-                  </div>
-                  <button class="claim-btn">CLAIM BONUS</button>
-                </div>
-              </div>
-            </section>
-
-            <section class="start-playing">
-              <h3><i class="fa-solid fa-gamepad"></i> Start Playing</h3>
-              <div class="game-grid">
-                <div class="game-card" data-game="Roulette">
-                  <img src="/roulette.png" alt="Roulette VIP" class="card-image" />
-                  <div class="card-name">Roulette VIP</div>
-                </div>
-                <div class="game-card coming-soon">
-                  <div class="card-name">Classic Slots<br><span style="font-size:0.8rem;color:#888;">Coming Soon</span></div>
-                </div>
-                <div class="game-card coming-soon">
-                  <div class="card-name">Blackjack Pro<br><span style="font-size:0.8rem;color:#888;">Coming Soon</span></div>
-                </div>
-                <div class="game-card coming-soon">
-                  <div class="card-name">Poker Hold'em<br><span style="font-size:0.8rem;color:#888;">Coming Soon</span></div>
-                </div>
-              </div>
-            </section>
+          <button id="submitAuthBtn" class="primary-btn">CONTINUE</button>
+          <div class="social-buttons">
+            <button class="social-btn google"><img
+                src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" />
+              Google</button>
+            <button class="social-btn facebook"><i class="fa-brands fa-facebook"></i> Facebook</button>
           </div>
-
-          <!-- ACTIVE GAME VIEW -->
-          <div id="activeGameView" class="hidden">
-            <button id="backToLobbyBtn" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Lobby</button>
-            
-            <!-- Slots UI (Old generic UI) -->
-            <div id="slotsGameContainer" class="active-game-container hidden">
-              <h2 id="activeGameTitle" class="active-game-title">Game Title</h2>
-              <img id="activeGameImg" src="" class="active-game-hero" />
-              
-              <div class="betting-console" style="margin-top: 30px;">
-                <div class="input-group">
-                  <span class="bet-label">Bet Amount:</span>
-                  <input type="number" id="betInput" placeholder="Bet" value="10" min="1" step="1" />
-                </div>
-                <button id="spinBtn" class="spin-action-btn">SPIN NOW</button>
-              </div>
-              <div id="resultLog" class="result-log console-log">Place your bet!</div>
-            </div>
-
-            <!-- New Roulette Interactive UI -->
-            <div id="rouletteGameContainer" class="active-game-container hidden">
-              <div class="wheel-section">
-                <div class="ball-wrapper" id="ballWrapper">
-                  <div class="ball" id="rouletteBall"></div>
-                </div>
-                <img src="/roulette_wheel_perfect.svg" id="rouletteWheel" class="wheel-img" />
-              </div>
-              
-              <div class="roulette-board-wrapper">
-                <div class="chip-selector" id="chipSelector">
-                  <div class="chip chip-1 selected" data-value="1">1</div>
-                  <div class="chip chip-5" data-value="5">5</div>
-                  <div class="chip chip-10" data-value="10">10</div>
-                  <div class="chip chip-50" data-value="50">50</div>
-                  <div class="chip chip-100" data-value="100">100</div>
-                </div>
-                
-                <div class="roulette-table" id="rouletteTable">
-                   <!-- Generated by JS -->
-                </div>
-              </div>
-              
-              <div class="action-bar">
-                <div class="bet-info">Total Bet: $<span id="totalBetDisplay">0</span></div>
-                <div>
-                  <button id="clearBetsBtn" class="secondary-btn">CLEAR BETS</button>
-                  <button id="spinRouletteBtn" class="spin-action-btn">SPIN WHEEL</button>
-                </div>
-              </div>
-              <div id="rouletteResultLog" class="result-log console-log" style="margin-top:20px;">Place your bets!</div>
-            </div>
-
+          <div id="signupTerms" class="terms-container">
+            <label class="checkbox-label">
+              <input type="checkbox" id="ageCheck" />
+              <span class="terms-text">I confirm that I am at least 21 years old and reside in a Permitted Territory. I
+                have read and agree to the Terms & Conditions, Privacy Policy, and confirm that I do not currently have
+                an existing account.</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="marketingCheck" />
+              <span class="terms-text">I consent to receive marketing communications, promotional messages, and
+                partnership offers via SMS, phone, and messengers.</span>
+            </label>
           </div>
-        </main>
+          <div class="auth-footer">
+            <span id="authToggleText">Already have an account?</span>
+            <a href="#" id="toggleAuthMode">Log in</a>
+          </div>
+          <div id="authLog" class="result-log" style="margin-top:10px;"></div>
+        </div>
       </div>
     </div>
-    <script type="module" src="./main.js"></script>
-  </body>
+
+    <!-- Full Dashboard -->
+    <div id="gamePanel" class="dashboard hidden">
+      <!-- Header -->
+      <header class="navbar">
+        <div class="nav-left">
+          <div class="logo">SOCIALGRAND</div>
+        </div>
+        <div class="nav-right">
+          <div class="profile-pill">
+            <span class="player-name"><i class="fa-solid fa-user"></i> <span id="currentUser"></span></span>
+            <span class="player-divider">|</span>
+            <div class="currency-toggle">
+              <input type="radio" id="currencyGold" name="currency" value="gold" checked>
+              <label for="currencyGold" class="toggle-label gold-label"><i class="fa-solid fa-shield-halved"></i>
+                Gold</label>
+
+              <input type="radio" id="currencySweep" name="currency" value="sweep">
+              <label for="currencySweep" class="toggle-label sweep-label"><i class="fa-solid fa-shield-halved"></i>
+                Sweep</label>
+              <div class="toggle-bg"></div>
+            </div>
+            <span class="player-balance"><span id="balanceDisplay">0</span> <span id="balanceIcon"><i
+                  class="fa-solid fa-shield-halved" style="color: #feca3b;"></i></span></span>
+          </div>
+          <button id="logoutBtn" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+        </div>
+      </header>
+
+      <main class="dashboard-content">
+        <!-- LOBBY VIEW -->
+        <div id="lobbyView">
+          <section class="hero-banner">
+            <img src="/lobby_banner.png" alt="Welcome Offer" class="hero-img" />
+            <div class="hero-overlay">
+              <div class="hero-text">
+                <h2>Claim Your<br>Welcome Offer</h2>
+                <div class="hero-badges">
+                  <span class="badge gold"><i class="fa-solid fa-shield-halved"></i> 75,000 Gold</span>
+                  <span class="badge blue"><i class="fa-solid fa-shield-halved"></i> 2 Sweep For FREE</span>
+                </div>
+                <button class="claim-btn">CLAIM BONUS</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="start-playing">
+            <h3><i class="fa-solid fa-gamepad"></i> Start Playing</h3>
+            <div class="game-grid">
+              <div class="game-card" data-game="Roulette">
+                <img src="/roulette.png" alt="Roulette VIP" class="card-image" />
+                <div class="card-name">Roulette VIP</div>
+              </div>
+              <div class="game-card" data-game="Blackjack">
+                <img src="/blackjack.png" alt="Blackjack Pro" class="card-image" />
+                <div class="card-name">Blackjack Pro</div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- NEW: MONITORING, TRANSACTION HISTORY & APP INSIGHTS SECTION -->
+          <section class="platform-monitoring">
+            <div class="monitoring-grid">
+
+              <!-- 1. Transaction History (Player View) -->
+              <div class="monitor-card player-tx-history">
+                <div class="card-header">
+                  <h4><i class="fa-solid fa-clock-rotate-left"></i> My Recent Transactions</h4>
+                  <button id="refreshTxBtn" class="refresh-mini-btn"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+                <div class="tx-list-container">
+                  <div id="txList" class="tx-list">
+                    <!-- Loaded dynamically via JS -->
+                    <div class="no-tx-placeholder">Loading transactions...</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. App Insights & Database Stats (Admin View) -->
+              <div class="monitor-card admin-insights">
+                <div class="card-header">
+                  <h4><i class="fa-solid fa-chart-line"></i> Platform Insights (DB Stats)</h4>
+                  <button id="refreshInsightsBtn" class="refresh-mini-btn"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+                <div class="insights-container">
+                  <div class="insights-stats-grid">
+                    <div class="stat-box">
+                      <span class="stat-label">Total Users</span>
+                      <span id="statTotalUsers" class="stat-value">...</span>
+                    </div>
+                    <div class="stat-box">
+                      <span class="stat-label">Total Bets (Gold)</span>
+                      <span id="statGoldVol" class="stat-value">...</span>
+                    </div>
+                    <div class="stat-box">
+                      <span class="stat-label">Total Bets (Sweep)</span>
+                      <span id="statSweepVol" class="stat-value">...</span>
+                    </div>
+                    <div class="stat-box">
+                      <span class="stat-label">Wins / Losses</span>
+                      <span id="statWinRatio" class="stat-value">...</span>
+                    </div>
+                  </div>
+
+                  <div class="recent-global-activity">
+                    <h5>Recent Platform Activity</h5>
+                    <div id="globalActivityList" class="activity-list">
+                      <!-- Loaded dynamically via JS -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Microservice Health Check Monitor -->
+              <div class="monitor-card health-monitor">
+                <div class="card-header">
+                  <h4><i class="fa-solid fa-heart-pulse"></i> Infrastructure Health Monitor</h4>
+                  <span id="healthPulse" class="pulse-indicator offline"></span>
+                </div>
+                <div class="health-status-details">
+                  <div class="health-item">
+                    <span class="service-name">Gateway API (Nginx)</span>
+                    <span class="status-badge success">ONLINE</span>
+                  </div>
+                  <div class="health-item">
+                    <span class="service-name">Wallet Service (API)</span>
+                    <span id="healthWalletStatus" class="status-badge pending">CHECKING...</span>
+                  </div>
+                  <div class="health-item">
+                    <span class="service-name">Database Cluster (PostgreSQL)</span>
+                    <span id="healthDbStatus" class="status-badge pending">CHECKING...</span>
+                  </div>
+                  <div class="health-uptime-container">
+                    <span class="uptime-label">Wallet Service Uptime:</span>
+                    <span id="healthUptime" class="uptime-value">...</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+        </div>
+
+        <!-- ACTIVE GAME VIEW -->
+        <div id="activeGameView" class="hidden">
+          <button id="backToLobbyBtn" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Lobby</button>
+
+          <!-- Slots UI (Old generic UI) -->
+          <div id="slotsGameContainer" class="active-game-container hidden">
+            <h2 id="activeGameTitle" class="active-game-title">Game Title</h2>
+            <img id="activeGameImg" src="" class="active-game-hero" />
+
+            <div class="betting-console" style="margin-top: 30px;">
+              <div class="input-group">
+                <span class="bet-label">Bet Amount:</span>
+                <input type="number" id="betInput" placeholder="Bet" value="10" min="1" step="1" />
+              </div>
+              <button id="spinBtn" class="spin-action-btn">SPIN NOW</button>
+            </div>
+            <div id="resultLog" class="result-log console-log">Place your bet!</div>
+          </div>
+
+          <!-- New Roulette Interactive UI -->
+          <div id="rouletteGameContainer" class="active-game-container hidden">
+            <div class="wheel-section">
+              <div class="ball-wrapper" id="ballWrapper">
+                <div class="ball" id="rouletteBall"></div>
+              </div>
+              <img src="/roulette_wheel_perfect.svg" id="rouletteWheel" class="wheel-img" />
+            </div>
+
+            <div class="roulette-board-wrapper">
+              <div class="chip-selector" id="chipSelector">
+                <div class="chip chip-1 selected" data-value="1">1</div>
+                <div class="chip chip-5" data-value="5">5</div>
+                <div class="chip chip-50" data-value="50">50</div>
+                <div class="chip chip-100" data-value="100">100</div>
+                <div class="chip chip-1000" data-value="1000">1000</div>
+                <div class="chip chip-10000" data-value="10000">10k</div>
+                <div class="chip chip-100000" data-value="100000">100k</div>
+                <div class="chip chip-1000000" data-value="1000000">1kk</div>
+              </div>
+
+              <div class="roulette-table" id="rouletteTable">
+                <!-- Generated by JS -->
+              </div>
+            </div>
+
+            <div class="action-bar">
+              <div class="bet-info">Total Bet: $<span id="totalBetDisplay">0</span></div>
+              <div>
+                <button id="clearBetsBtn" class="secondary-btn">CLEAR BETS</button>
+                <button id="spinRouletteBtn" class="spin-action-btn">SPIN WHEEL</button>
+              </div>
+            </div>
+            <div id="rouletteResultLog" class="result-log console-log" style="margin-top:20px;">Place your bets!</div>
+          </div>
+
+          <!-- Blackjack Interactive UI -->
+          <div id="blackjackGameContainer" class="active-game-container hidden">
+            <div class="blackjack-table">
+
+              <!-- Dealer Side -->
+              <div class="bj-hand-section dealer-section">
+                <h3>Dealer Hand (Score: <span id="bjDealerScore">0</span>)</h3>
+                <div id="bjDealerCards" class="bj-cards-container">
+                  <!-- Generated by JS -->
+                  <div class="card-placeholder">Dealer cards go here</div>
+                </div>
+              </div>
+
+              <!-- Player Side -->
+              <div class="bj-hand-section player-section">
+                <h3>Your Hand (Score: <span id="bjPlayerScore">0</span>)</h3>
+                <div id="bjPlayerCards" class="bj-cards-container">
+                  <!-- Generated by JS -->
+                  <div class="card-placeholder">Your cards go here</div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="blackjack-console">
+              <div class="chip-selector bj-chip-selector" id="bjChipSelector">
+                <div class="chip chip-1 selected" data-value="1">1</div>
+                <div class="chip chip-5" data-value="5">5</div>
+                <div class="chip chip-50" data-value="50">50</div>
+                <div class="chip chip-100" data-value="100">100</div>
+                <div class="chip chip-1000" data-value="1000">1000</div>
+                <div class="chip chip-10000" data-value="10000">10k</div>
+                <div class="chip chip-100000" data-value="100000">100k</div>
+                <div class="chip chip-1000000" data-value="1000000">1kk</div>
+              </div>
+
+              <div class="bj-action-bar">
+                <div class="bj-bet-info">Bet: $<span id="bjBetDisplay">0</span></div>
+                <div class="bj-buttons">
+                  <button id="bjDealBtn" class="spin-action-btn">DEAL HAND</button>
+                  <button id="bjHitBtn" class="secondary-btn hidden"
+                    style="border-color:#10b981;color:#10b981;margin-right:10px;">HIT</button>
+                  <button id="bjStandBtn" class="secondary-btn hidden"
+                    style="border-color:#feca3b;color:#feca3b;margin-right:10px;">STAND</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="bjResultLog" class="result-log console-log" style="margin-top:20px;">Choose a bet and click DEAL
+              HAND to start!</div>
+          </div>
+
+
+
+        </div>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+
 </html>
