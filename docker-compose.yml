@@ -24,6 +24,8 @@ services:
       - "8081:8081"
     environment:
       - DATABASE_URL=postgresql://casino_user:casino_password@db:5432/casino_db
+      - JWT_SECRET=super-secret-jwt-signing-key-9999
+      - INTERNAL_API_KEY=super-secret-internal-key-9999
     depends_on:
       db:
         condition: service_healthy
@@ -35,6 +37,7 @@ services:
       - "8082:8082"
     environment:
       - WALLET_HOST=wallet-service
+      - INTERNAL_API_KEY=super-secret-internal-key-9999
     depends_on:
       - wallet-service
 

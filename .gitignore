@@ -57,6 +57,7 @@ yarn-error.log*
 # === Environments & Secrets ===
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 *.cert

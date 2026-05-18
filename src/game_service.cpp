@@ -2,12 +2,21 @@
 #include "RouletteEngine.hpp"
 #include "BlackjackEngine.hpp"
 #include "SpdLogger.hpp"
+#include "CircuitBreaker.hpp"
 #include "httplib.h"
 #include <cstdlib>
 #include <ctime>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+
+// Fault Tolerance & Private Internal Routing Configuration
+static CircuitBreaker walletBreaker(3, 10); // 3 failures, 10s cooldown
+
+static std::string getInternalApiKey() {
+  const char* env_key = std::getenv("INTERNAL_API_KEY");
+  return env_key ? env_key : "super-secret-internal-key-9999";
+}
 
 int main() {
   auto logger = std::make_shared<SpdLogger>();
@@ -36,7 +45,13 @@ int main() {
 
       if (betAmount <= 0) throw std::invalid_argument("Bet amount must be > 0");
 
-      // 1. Check wallet balance
+      // 1. Check wallet balance via Circuit Breaker
+      if (!walletBreaker.allowRequest()) {
+        res.status = 503;
+        res.set_content(json({{"error", "Wallet Service temporarily unavailable (Circuit Breaker OPEN)"}}).dump(), "application/json");
+        return;
+      }
+
       const char *wallet_host = std::getenv("WALLET_HOST");
       std::string whost = wallet_host ? wallet_host : "casino-wallet.fly.dev";
       std::string url = whost;
@@ -47,8 +62,16 @@ int main() {
       cli.set_connection_timeout(10, 0);
       cli.enable_server_certificate_verification(false);
 
-      auto bal_res = cli.Get("/api/balance?userId=" + std::to_string(userId));
-      if (!bal_res || bal_res->status != 200) throw std::runtime_error("Wallet Service unreachable");
+      httplib::Headers headers = {
+        {"X-Internal-Key", getInternalApiKey()}
+      };
+
+      auto bal_res = cli.Get("/api/balance?userId=" + std::to_string(userId), headers);
+      if (!bal_res || bal_res->status != 200) {
+        walletBreaker.recordFailure();
+        throw std::runtime_error("Wallet Service unreachable");
+      }
+      walletBreaker.recordSuccess();
 
       auto bal_data = json::parse(bal_res->body);
       double currentBalance = (currency == "sweep") ? bal_data["balance_sweep"].get<double>() : bal_data["balance_gold"].get<double>();
@@ -97,7 +120,13 @@ int main() {
           wonAmount = betAmount * 2.5; // Blackjack pays 3:2 (return 1 + payout 1.5 = 2.5)
         }
 
-        // Commit transaction
+        // Commit transaction via Circuit Breaker
+        if (!walletBreaker.allowRequest()) {
+          res.status = 503;
+          res.set_content(json({{"error", "Wallet Service temporarily unavailable (Circuit Breaker OPEN)"}}).dump(), "application/json");
+          return;
+        }
+
         json tx;
         tx["userId"] = userId;
         tx["currency"] = currency;
@@ -110,8 +139,12 @@ int main() {
           tx["type"] = "PUSH_Blackjack";
         }
 
-        auto tx_res = cli.Post("/api/internal/transaction", tx.dump(), "application/json");
-        if (!tx_res || tx_res->status != 200) throw std::runtime_error("Transaction failed");
+        auto tx_res = cli.Post("/api/internal/transaction", headers, tx.dump(), "application/json");
+        if (!tx_res || tx_res->status != 200) {
+          walletBreaker.recordFailure();
+          throw std::runtime_error("Transaction failed");
+        }
+        walletBreaker.recordSuccess();
         auto new_bal = json::parse(tx_res->body);
 
         responseJson["status"] = result;
@@ -178,7 +211,13 @@ int main() {
       responseJson["currency"] = currency;
 
       if (playerScore > 21) {
-        // Player busted, lose bet
+        // Player busted, lose bet via Circuit Breaker
+        if (!walletBreaker.allowRequest()) {
+          res.status = 503;
+          res.set_content(json({{"error", "Wallet Service temporarily unavailable (Circuit Breaker OPEN)"}}).dump(), "application/json");
+          return;
+        }
+
         const char *wallet_host = std::getenv("WALLET_HOST");
         std::string whost = wallet_host ? wallet_host : "casino-wallet.fly.dev";
         std::string url = whost;
@@ -189,14 +228,22 @@ int main() {
         cli.set_connection_timeout(10, 0);
         cli.enable_server_certificate_verification(false);
 
+        httplib::Headers headers = {
+          {"X-Internal-Key", getInternalApiKey()}
+        };
+
         json tx;
         tx["userId"] = userId;
         tx["currency"] = currency;
         tx["amount"] = betAmount;
         tx["type"] = "LOSE_Blackjack";
 
-        auto tx_res = cli.Post("/api/internal/transaction", tx.dump(), "application/json");
-        if (!tx_res || tx_res->status != 200) throw std::runtime_error("Transaction failed");
+        auto tx_res = cli.Post("/api/internal/transaction", headers, tx.dump(), "application/json");
+        if (!tx_res || tx_res->status != 200) {
+          walletBreaker.recordFailure();
+          throw std::runtime_error("Transaction failed");
+        }
+        walletBreaker.recordSuccess();
         auto new_bal = json::parse(tx_res->body);
 
         responseJson["status"] = "lose";
@@ -256,7 +303,13 @@ int main() {
         wonAmount = betAmount; // Return bet
       }
 
-      // Settle balances
+      // Settle balances via Circuit Breaker
+      if (!walletBreaker.allowRequest()) {
+        res.status = 503;
+        res.set_content(json({{"error", "Wallet Service temporarily unavailable (Circuit Breaker OPEN)"}}).dump(), "application/json");
+        return;
+      }
+
       const char *wallet_host = std::getenv("WALLET_HOST");
       std::string whost = wallet_host ? wallet_host : "casino-wallet.fly.dev";
       std::string url = whost;
@@ -266,6 +319,10 @@ int main() {
       httplib::Client cli(url);
       cli.set_connection_timeout(10, 0);
       cli.enable_server_certificate_verification(false);
+
+      httplib::Headers headers = {
+        {"X-Internal-Key", getInternalApiKey()}
+      };
 
       json tx;
       tx["userId"] = userId;
@@ -282,8 +339,12 @@ int main() {
         tx["type"] = "PUSH_Blackjack";
       }
 
-      auto tx_res = cli.Post("/api/internal/transaction", tx.dump(), "application/json");
-      if (!tx_res || tx_res->status != 200) throw std::runtime_error("Transaction failed");
+      auto tx_res = cli.Post("/api/internal/transaction", headers, tx.dump(), "application/json");
+      if (!tx_res || tx_res->status != 200) {
+        walletBreaker.recordFailure();
+        throw std::runtime_error("Transaction failed");
+      }
+      walletBreaker.recordSuccess();
       auto new_bal = json::parse(tx_res->body);
 
       responseJson["playerCards"] = json::array();
@@ -345,7 +406,13 @@ int main() {
         if (totalBetAmount <= 0)
           throw std::invalid_argument("Total bet amount must be > 0");
 
-        // 1. COMMUNICATE WITH WALLET SERVICE TO GET BALANCE
+        // 1. COMMUNICATE WITH WALLET SERVICE TO GET BALANCE via Circuit Breaker
+        if (!walletBreaker.allowRequest()) {
+          res.status = 503;
+          res.set_content(json({{"error", "Wallet Service temporarily unavailable (Circuit Breaker OPEN)"}}).dump(), "application/json");
+          return;
+        }
+
         const char *wallet_host = std::getenv("WALLET_HOST");
         std::string whost = wallet_host ? wallet_host : "casino-wallet.fly.dev";
         std::string url = whost;
@@ -356,10 +423,16 @@ int main() {
         cli.set_connection_timeout(10, 0);
         cli.enable_server_certificate_verification(false);
 
-        auto bal_res = cli.Get("/api/balance?userId=" + std::to_string(userId));
+        httplib::Headers headers = {
+          {"X-Internal-Key", getInternalApiKey()}
+        };
+
+        auto bal_res = cli.Get("/api/balance?userId=" + std::to_string(userId), headers);
         if (!bal_res || bal_res->status != 200) {
+          walletBreaker.recordFailure();
           throw std::runtime_error("Wallet Service is unreachable or failed");
         }
+        walletBreaker.recordSuccess();
 
         auto bal_data = json::parse(bal_res->body);
         double currentBalance = (currency == "sweep")
@@ -389,12 +462,21 @@ int main() {
           tx["type"] = "LOSE_Roulette";
         }
 
-        auto tx_res = cli.Post("/api/internal/transaction", tx.dump(),
+        // Commit transaction via Circuit Breaker
+        if (!walletBreaker.allowRequest()) {
+          res.status = 503;
+          res.set_content(json({{"error", "Wallet Service temporarily unavailable (Circuit Breaker OPEN)"}}).dump(), "application/json");
+          return;
+        }
+
+        auto tx_res = cli.Post("/api/internal/transaction", headers, tx.dump(),
                                "application/json");
         if (!tx_res || tx_res->status != 200) {
+          walletBreaker.recordFailure();
           throw std::runtime_error(
               "Failed to commit transaction to Wallet Service");
         }
+        walletBreaker.recordSuccess();
 
         auto new_bal_data = json::parse(tx_res->body);
 

@@ -1,5 +1,53 @@
 const API_URL = '/api';
 
+// --- JWT Access & Refresh Token Helpers ---
+function getAccessToken() { return localStorage.getItem('casino_access_token'); }
+function getRefreshToken() { return localStorage.getItem('casino_refresh_token'); }
+function setTokens(access, refresh) {
+  if (access) localStorage.setItem('casino_access_token', access);
+  if (refresh) localStorage.setItem('casino_refresh_token', refresh);
+}
+function clearTokens() {
+  localStorage.removeItem('casino_access_token');
+  localStorage.removeItem('casino_refresh_token');
+}
+
+async function fetchWithAuth(url, options = {}) {
+  options.headers = options.headers || {};
+  const token = getAccessToken();
+  if (token) {
+    options.headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  let response = await fetch(url, options);
+  
+  // If unauthorized (access token expired), try to refresh
+  if (response.status === 401 && getRefreshToken()) {
+    try {
+      const refreshResponse = await fetch(`${API_URL}/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: getRefreshToken() })
+      });
+      if (refreshResponse.ok) {
+        const data = await refreshResponse.json();
+        setTokens(data.access_token, data.refresh_token);
+        
+        // Retry original request with new access token
+        options.headers['Authorization'] = `Bearer ${data.access_token}`;
+        response = await fetch(url, options);
+      } else {
+        // Refresh token invalid/expired, log out
+        showAuthPanel();
+      }
+    } catch (err) {
+      showAuthPanel();
+    }
+  }
+  
+  return response;
+}
+
 const authOverlay = document.getElementById('authOverlay');
 const gamePanel = document.getElementById('gamePanel');
 const authTitle = document.getElementById('authTitle');
@@ -442,7 +490,7 @@ const healthUptime = document.getElementById('healthUptime');
 async function fetchTransactionHistory() {
   if (!currentUserId) return;
   try {
-    const response = await fetch(`${API_URL}/transactions?userId=${currentUserId}`);
+    const response = await fetchWithAuth(`${API_URL}/transactions`);
     if (!response.ok) throw new Error("Failed to load");
     const data = await response.json();
     
@@ -608,6 +656,7 @@ function showAuthPanel() {
   // Clear cached session
   localStorage.removeItem('casino_user_id');
   localStorage.removeItem('casino_username');
+  clearTokens();
   
   setAuthMode(false); 
 }
@@ -627,7 +676,13 @@ submitAuthBtn.addEventListener('click', async () => {
   try {
     const response = await fetch(`${API_URL}/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
     const data = await response.json();
-    if (response.ok) { currentUserId = data.user_id; currentUsername = username; updateBalanceUI(data.balance_gold, data.balance_sweep); showGamePanel(); }
+    if (response.ok) { 
+      currentUserId = data.user_id; 
+      currentUsername = username; 
+      setTokens(data.access_token, data.refresh_token);
+      updateBalanceUI(data.balance_gold, data.balance_sweep); 
+      showGamePanel(); 
+    }
     else { authLog.textContent = data.error || 'Authentication failed'; authLog.style.color = '#ff4b4b'; }
   } catch (err) { authLog.textContent = 'Server connection error'; authLog.style.color = '#ff4b4b'; }
 });
@@ -668,7 +723,13 @@ async function socialLogin(email, provider) {
   try {
     const response = await fetch(`${API_URL}/social_login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, provider }) });
     const data = await response.json();
-    if (response.ok) { currentUserId = data.user_id; currentUsername = email; updateBalanceUI(data.balance_gold, data.balance_sweep); showGamePanel(); }
+    if (response.ok) { 
+      currentUserId = data.user_id; 
+      currentUsername = email; 
+      setTokens(data.access_token, data.refresh_token);
+      updateBalanceUI(data.balance_gold, data.balance_sweep); 
+      showGamePanel(); 
+    }
     else { authLog.textContent = 'Social Auth failed'; }
   } catch (err) { authLog.textContent = 'Server error'; }
 }
@@ -931,8 +992,8 @@ async function restoreSession() {
   const savedUserId = localStorage.getItem('casino_user_id');
   const savedUsername = localStorage.getItem('casino_username');
   
-  if (!savedUserId || !savedUsername) {
-    return; // No saved session, stay on login screen
+  if (!savedUserId || !savedUsername || !getAccessToken()) {
+    return; // No saved session or token, stay on login screen
   }
   
   try {
@@ -940,7 +1001,7 @@ async function restoreSession() {
     authLog.textContent = 'Restoring session...';
     authLog.style.color = '#feca3b';
     
-    const response = await fetch(`${API_URL}/balance?userId=${savedUserId}`);
+    const response = await fetchWithAuth(`${API_URL}/balance`);
     if (!response.ok) throw new Error("Session invalid");
     const data = await response.json();
     
@@ -953,6 +1014,7 @@ async function restoreSession() {
     // If restoration failed (server error or deleted user), clear session
     localStorage.removeItem('casino_user_id');
     localStorage.removeItem('casino_username');
+    clearTokens();
     authLog.textContent = '';
   }
 }

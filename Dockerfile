@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     libpqxx-dev \
     nlohmann-json3-dev \
     libspdlog-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -38,6 +39,7 @@ FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y \
     libpq5 \
     libpqxx-6.4 \
+    libssl3 \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 

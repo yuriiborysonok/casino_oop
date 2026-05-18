@@ -47,7 +47,7 @@ if(APPLE)
     target_link_directories(game_service PRIVATE /opt/homebrew/lib /opt/homebrew/opt/libpq/lib)
 endif()
 
-target_link_libraries(wallet_service PRIVATE casino_core httplib::httplib nlohmann_json::nlohmann_json pqxx pq)
+target_link_libraries(wallet_service PRIVATE casino_core httplib::httplib nlohmann_json::nlohmann_json pqxx pq OpenSSL::SSL OpenSSL::Crypto)
 target_link_libraries(game_service PRIVATE casino_core httplib::httplib nlohmann_json::nlohmann_json OpenSSL::SSL OpenSSL::Crypto)
 
 add_subdirectory(tests)

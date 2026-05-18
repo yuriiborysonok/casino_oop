@@ -50,6 +50,12 @@ paths:
                   balance_sweep:
                     type: number
                     example: 2.0
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  refresh_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         '400':
           description: User already exists or invalid request
 
@@ -94,8 +100,48 @@ paths:
                   balance_sweep:
                     type: number
                     example: 2.0
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  refresh_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         '401':
           description: Invalid username or password
+
+  /api/refresh:
+    post:
+      summary: Refresh JWT Access Token using Refresh Token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Refresh successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  refresh_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '401':
+          description: Invalid or expired refresh token
 
   /api/social_login:
     post:
@@ -138,19 +184,20 @@ paths:
                   balance_sweep:
                     type: number
                     example: 2.0
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  refresh_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
   /api/balance:
     get:
       summary: Get user balances
       tags:
         - Wallet
-      parameters:
-        - name: userId
-          in: query
-          required: true
-          schema:
-            type: integer
-          example: 1
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Balances retrieved successfully
@@ -244,13 +291,8 @@ paths:
       summary: Get recent user transaction history
       tags:
         - Wallet
-      parameters:
-        - name: userId
-          in: query
-          required: true
-          schema:
-            type: integer
-          example: 1
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: List of transactions
@@ -351,3 +393,10 @@ paths:
                   database:
                     type: string
                     example: connected
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
